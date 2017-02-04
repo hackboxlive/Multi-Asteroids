@@ -59,15 +59,22 @@ window.addEventListener('load',function() {
     socket.on('newPositions',function(data){
         ctx.save();
         ctx.clearRect(0,0,1200,650);
-        players = data[0];
-        bullets = data[1];
+        var players = data[0];
+        var bullets = data[1];
+        var asteroids = data[2];
         for(var i = 0 ; i < players.length; i++) {
             console.log(players[i].direction);
             drawPath(ctx, players[i].position, players[i].direction, 1, path);
         }
+        ctx.resetTransform();
         for(var i = 0; i < bullets.length; i++) {
             console.log(bullets[i].direction)
             drawCircle(ctx, bullets[i].position[0], bullets[i].position[1]);
+        }
+        ctx.resetTransform();
+        for(var i = 0; i < asteroids.length; i++) {
+            drawAsteroid(ctx, asteroids[i].position, asteroids[i].path);
+            ctx.resetTransform();
         }
         ctx.restore();
     });
@@ -96,7 +103,23 @@ window.addEventListener('load',function() {
         ctx.closePath();
         ctx.fillStyle="blue";
         ctx.fill();
+        ctx.resetTransform();
     };
+
+    drawAsteroid = function(ctx, position, paths) {
+        var scale = 1;
+        ctx.translate(position[0],position[1]);
+        ctx.beginPath();
+        ctx.moveTo(paths[0][0], paths[0][1]);
+        console.log(paths);
+        for (i=1; i<paths.length; i++) {
+            ctx.lineTo(paths[i][0], paths[i][1]);
+        }
+        ctx.stroke();
+        ctx.closePath();
+        ctx.fillStyle="blue";
+        ctx.fill();
+    }
 
     var path = [
         [10, 0],

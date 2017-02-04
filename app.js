@@ -14,106 +14,100 @@ console.log("Server started.");
 function Player(id) {
     console.log(id);
     console.log("Inside player function")
-    this.id = id;
-    this.position = [100, 100];
-    this.velocity = [0, 0];
-    this.direction = -3.14/2;
-    this.dead = false;
-    this.RIGHT = false;
-    this.LEFT = false;
-    this.UP = false;
-    this.DOWN = false;
-    this.FIRE = false;
-    this.invincible = false;
-    this.lives = 3;
-    this.score = 0;
-    this.radius = 3;
-    this.path = [
+    var self = {};
+    var selfFlag = 0;
+    self.id = id;
+    self.position = [100, 100];
+    self.velocity = [0, 0];
+    self.direction = -3.14/4; // make it 2
+    self.dead = false;
+    self.RIGHT = false;
+    self.LEFT = false;
+    self.UP = false;
+    self.DOWN = false;
+    self.FIRE = false;
+    self.invincible = false;
+    self.lives = 3;
+    self.score = 0;
+    self.radius = 3;
+    self.path = [
         [10, 0],
         [-5, 5],
         [-5, -5],
         [10, 0],
     ];
-    this.MAX_SPEED = 5;
+    self.MAX_SPEED = 5;
 
-    this.getSpeed = function() {
+    self.getSpeed = function() {
         with (Math) {
-            return sqrt(pow(this.velocity[0], 2) + pow(this.velocity[1], 2));
+            return sqrt(pow(self.velocity[0], 2) + pow(self.velocity[1], 2));
         }
     };
 
-    this.addScore = function(pts) {
-        this.score += pts;
+    self.addScore = function(pts) {
+        self.score += pts;
     };
 
-    this.lowerScore = function(pts) {
-        this.score -= pts;
-        if (this.score < 0) {
-            this.score = 0;
+    self.lowerScore = function(pts) {
+        self.score -= pts;
+        if (self.score < 0) {
+            self.score = 0;
         }
     };
 
-    this.rotate = function(rad) {
-        if (!this.dead) {
-            this.direction += rad;
-            //game.log.info(this.direction);
+    self.rotate = function(rad) {
+        if (!self.dead) {
+            self.direction += rad;
+            //game.log.info(self.direction);
         }
     };
 
-    this.thrust = function(force) {
-        if (!this.dead) {
-            this.velocity[0] += force * Math.cos(this.direction);
-            this.velocity[1] += force * Math.sin(this.direction);
+    self.thrust = function(force) {
+        if (!self.dead) {
+            self.velocity[0] += force * Math.cos(self.direction);
+            self.velocity[1] += force * Math.sin(self.direction);
 
-            if (this.getSpeed() > this.MAX_SPEED) {
-                this.velocity[0] = this.MAX_SPEED * Math.cos(this.direction);
-                this.velocity[1] = this.MAX_SPEED * Math.sin(this.direction);
+            if (self.getSpeed() > self.MAX_SPEED) {
+                self.velocity[0] = self.MAX_SPEED * Math.cos(self.direction);
+                self.velocity[1] = self.MAX_SPEED * Math.sin(self.direction);
             }
         }
     };
 
-    this.friction = function() {
-        if(!this.dead) {
-            if(this.velocity[0] > 0) {
-                this.velocity[0] -= 0.1;
-            }
-            if(this.velocity[1] > 0) {
-                this.velocity[1] -= 0.1; 
-            }
-            if(this.velocity[0] < 0)
-                this.velocity[0] = 0;
-            if(this.velocity[1] < 0)
-                this.velocity[1] = 0;
+    self.friction = function() {
+        if(!self.dead) {
+            self.velocity[0]/=1.05;
+            self.velocity[1]/=1.05;
         }
     };
 
-    this.move = function() {
-        this.position[0] += this.velocity[0];
-        if (this.position[0] < 0)
-            this.position[0] = GAME_WIDTH + this.position[0];
-        else if (this.position[0] > GAME_WIDTH)
-            this.position[0] -= GAME_WIDTH;
+    self.move = function() {
+        self.position[0] += self.velocity[0];
+        if (self.position[0] < 0)
+            self.position[0] = GAME_WIDTH + self.position[0];
+        else if (self.position[0] > GAME_WIDTH)
+            self.position[0] -= GAME_WIDTH;
 
-        this.position[1] += this.velocity[1];
-        if (this.position[1] < 0)
-            this.position[1] = GAME_HEIGHT + this.position[1];
-        else if (this.position[1] > GAME_HEIGHT)
-            this.position[1] -= GAME_HEIGHT;
+        self.position[1] += self.velocity[1];
+        if (self.position[1] < 0)
+            self.position[1] = GAME_HEIGHT + self.position[1];
+        else if (self.position[1] > GAME_HEIGHT)
+            self.position[1] -= GAME_HEIGHT;
     };
 
-    this.die = function() {
-        if (!this.dead) {
-            this.dead = true;
-            this.invincible = true;
-            this.position = [100, 100];
-            this.velocity = [0, 0];
-            this.direction = -Math.PI/2;
-            if (this.lives > 0) {
+    self.die = function() {
+        if (!self.dead) {
+            self.dead = true;
+            self.invincible = true;
+            self.position = [100, 100];
+            self.velocity = [0, 0];
+            self.direction = -Math.PI/2;
+            if (self.lives > 0) {
                 setTimeout(function (player, _game) {
                     return function() {
                         player.ressurrect(_game);
                     };
-                }(this, game), DEATH_TIMEOUT);
+                }(self, game), DEATH_TIMEOUT);
             }
             else {
                 game.gameOver();
@@ -121,58 +115,124 @@ function Player(id) {
         }
     };
 
-    this.fire = function() {
-        if (!this.dead) {
+    self.fire = function() {
+        if (!self.dead) {
             console.log("bullet fired");
-            var bullet = new Bullet(this.id, this.position[0], this.position[1], this.direction);
+            var bullet = Bullet(self.id, self.position[0], self.position[1], self.direction);
         }
     };
 
-    this.update = function() {
-        if(this.LEFT) {
+    self.update = function() {
+        if(self.LEFT) {
             console.log("rotating");
-            this.rotate(-0.1);
+            self.rotate(-0.1);
         }
-        if(this.RIGHT) {
+        if(self.RIGHT) {
             console.log("rotating");
-            this.rotate(+0.1);
+            self.rotate(+0.1);
         }
-        if(this.UP) {
+        if(self.UP) {
             console.log("Applying thrust");
-            this.thrust(1);
+            self.thrust(1);
         }
-        if(!this.UP) {
-            this.friction();
+        if(!self.UP) {
+            self.friction();
         }
-        if(this.FIRE) {
-            this.fire();
+        if(self.FIRE) {
+            self.fireFlag = 1;
         }
-        this.move();
+        if(!self.FIRE) {
+            if(self.fireFlag) {
+                self.fire();
+                self.fireFlag = 0;
+            }
+        }
+        self.move();
     };
+    return self;
 }
 
 function Bullet(id, posx, posy, dir) {
-    this.id = id;
-    this.position = [posx, posy]
+    var self = {};
+    self.id = id;
+    self.position = [posx, posy]
     var direction = dir;
-    this.direction = direction;
+    self.direction = direction;
     //var direction = dir;
-    this.timestamp = 0;
-    this.velocity = [ 1 * Math.cos(this.direction), 1 * Math.sin(this.direction)]
-    this.dead = 0;
-    this.update = function() {
-        if(!this.dead) {
-            this.position[0] +=  this.velocity[0];
-            this.position[1] += this.velocity[1];
-            console.log(direction);
+    self.timestamp = 0;
+    self.velocity = [ 15 * Math.cos(self.direction), 15 * Math.sin(self.direction)]
+    self.dead = 0;
+    self.update = function() {
+        if(!self.dead) {
+            self.position[0] +=  self.velocity[0];
+            self.position[1] += self.velocity[1];
         }
     };
-    BULLET_LIST.push(this);
+    BULLET_LIST.push(self);
+    return self;
 }
+
+function Asteroid() {
+    var self = {};	
+    self.radius= Math.floor(Math.random()*20)+12;
+    //self.radius = 5;
+    var side = Math.floor(Math.random()*4)+1;
+    var x,y;
+    if(side == 1)	{
+        x=0;
+        y=Math.floor(Math.random()*610)+20;
+    }
+    if(side == 3)	{
+        x=GAME_WIDTH;
+        y=Math.floor(Math.random()*610)+20;
+    }
+    if(side == 2)	{
+        x=Math.floor(Math.random()*1150)+20;
+        y=0;
+    }
+    if(side == 4)	{
+        x=Math.floor(Math.random()*1150)+20;
+        y=GAME_HEIGHT;
+    }	
+    self.x=x;
+    self.y=y;
+    var circumference=[];
+    for(var i=0;i<12;i++) {
+        var angle = 0.52083 * i;
+        var radius = self.radius;
+        x =  (Math.random()-0.5)*radius/10 + radius*Math.sin(angle);
+        y =  (Math.random()-0.5)*radius/10 + radius*Math.cos(angle);
+        circumference.push([x,y]);
+    }
+    circumference.push(circumference[0]);
+    self.circumference = circumference;
+    self.speed = Math.random()*10+2;
+    self.direction=Math.random()*6.28;
+    self.update = function(){
+        self.x = self.x + self.speed * Math.sin(self.direction);
+        self.y = self.y + self.speed * Math.cos(self.direction);
+        if(self.y >= GAME_HEIGHT) {
+            self.y = 0 + self.radius + 2;
+        }
+        if(self.y < 0) {
+            self.y = GAME_HEIGHT - self.radius - 2;
+        }
+        if(self.x >= GAME_WIDTH) {
+            self.x = 0 + self.radius + 2;
+        }
+        if(self.x < 0) {
+            self.x = GAME_WIDTH - self.radius - 2;
+        }
+    };
+    ASTEROIDS_LIST.push(self);
+    return self;
+}
+
 
 var SOCKET_LIST = {};
 var PLAYER_LIST = {};
 var BULLET_LIST = [];
+var ASTEROIDS_LIST=[];
 
 var id = 0;
 var keys = {'37': 'LEFT', '39': 'RIGHT', '38': 'UP', '40' : 'DOWN', '88': 'FIRE'};
@@ -184,7 +244,7 @@ io.sockets.on('connection', function(socket){
     console.log("A client connected");
     SOCKET_LIST[socket.id] = socket;
 
-    var player = new Player(socket.id);
+    var player = Player(socket.id);
     //console.log(player);
     PLAYER_LIST[socket.id] = player;
 
@@ -208,19 +268,16 @@ io.sockets.on('connection', function(socket){
     });
 });
 
+setInterval(function() {
+    if(ASTEROIDS_LIST.length < 10)
+        var asteroid = Asteroid();
+}, 2000);
+
 setInterval(function(){
     var pack = [];
     var playerPack = [];
     var bulletPack = [];
-    for(var i in PLAYER_LIST){
-        var player = PLAYER_LIST[i];
-        player.update();
-        playerPack.push({
-            position:player.position,
-            direction:player.direction
-            //number:player.number
-        });    
-    }
+    var asteroidPack = [];
     for(var i in BULLET_LIST) {
         var bullet = BULLET_LIST[i];
         bullet.update();
@@ -240,9 +297,28 @@ setInterval(function(){
             });
         }
     }
-    console.log(bulletPack);
+    for(var i in PLAYER_LIST){
+        var player = PLAYER_LIST[i];
+        player.update();
+        playerPack.push({
+            position:player.position,
+            direction:player.direction
+            //number:player.number
+        });    
+    }
+    for(var i in ASTEROIDS_LIST) {
+        var asteroid = ASTEROIDS_LIST[i];
+        asteroid.update();
+        asteroidPack.push({
+            position:[asteroid.x, asteroid.y],
+            path:asteroid.circumference
+        });
+    }
     pack.push(playerPack);
     pack.push(bulletPack);
+    pack.push(asteroidPack);
+    //console.log("Length of asteroid");
+    //console.log(asteroidPack.length);
     for(var i in SOCKET_LIST){
         var socket = SOCKET_LIST[i];
         socket.emit('newPositions',pack);
