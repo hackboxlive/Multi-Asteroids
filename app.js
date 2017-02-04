@@ -19,7 +19,7 @@ function Player(id) {
     self.id = id;
     self.position = [100, 100];
     self.velocity = [0, 0];
-    self.direction = -3.14/4; // make it 2
+    self.direction = -3.14/2; // make it 2
     self.dead = false;
     self.RIGHT = false;
     self.LEFT = false;
@@ -27,16 +27,17 @@ function Player(id) {
     self.DOWN = false;
     self.FIRE = false;
     self.invincible = false;
+    self.health = 100;
     self.lives = 3;
     self.score = 0;
-    self.radius = 3;
+    self.radius = 4; // default it was 3
     self.path = [
         [10, 0],
         [-5, 5],
         [-5, -5],
         [10, 0],
     ];
-    self.MAX_SPEED = 5;
+    self.MAX_SPEED = 7;
 
     self.getSpeed = function() {
         with (Math) {
@@ -117,23 +118,19 @@ function Player(id) {
 
     self.fire = function() {
         if (!self.dead) {
-            console.log("bullet fired");
             var bullet = Bullet(self.id, self.position[0], self.position[1], self.direction);
         }
     };
 
     self.update = function() {
         if(self.LEFT) {
-            console.log("rotating");
             self.rotate(-0.1);
         }
         if(self.RIGHT) {
-            console.log("rotating");
             self.rotate(+0.1);
         }
         if(self.UP) {
-            console.log("Applying thrust");
-            self.thrust(1);
+            self.thrust(1.5);
         }
         if(!self.UP) {
             self.friction();
@@ -160,6 +157,7 @@ function Bullet(id, posx, posy, dir) {
     self.direction = direction;
     //var direction = dir;
     self.timestamp = 0;
+    self.radius = 5;
     self.velocity = [ 15 * Math.cos(self.direction), 15 * Math.sin(self.direction)]
     self.dead = 0;
     self.update = function() {
@@ -174,8 +172,7 @@ function Bullet(id, posx, posy, dir) {
 
 function Asteroid() {
     var self = {};	
-    self.radius= Math.floor(Math.random()*20)+12;
-    //self.radius = 5;
+    self.radius= Math.floor(Math.random()*20)+20;
     var side = Math.floor(Math.random()*4)+1;
     var x,y;
     if(side == 1)	{
@@ -200,13 +197,13 @@ function Asteroid() {
     for(var i=0;i<12;i++) {
         var angle = 0.52083 * i;
         var radius = self.radius;
-        x =  (Math.random()-0.5)*radius/10 + radius*Math.sin(angle);
-        y =  (Math.random()-0.5)*radius/10 + radius*Math.cos(angle);
+        x =  (Math.random()-0.5)*radius/5 + radius*Math.sin(angle);
+        y =  (Math.random()-0.5)*radius/5 + radius*Math.cos(angle);
         circumference.push([x,y]);
     }
     circumference.push(circumference[0]);
     self.circumference = circumference;
-    self.speed = Math.random()*10+2;
+    self.speed = Math.random()*3+ 3;
     self.direction=Math.random()*6.28;
     self.update = function(){
         self.x = self.x + self.speed * Math.sin(self.direction);
@@ -290,6 +287,30 @@ setInterval(function(){
             BULLET_LIST.splice(i,1);
             flag = 1;
         }
+        for(var k in ASTEROIDS_LIST) {
+            var ast = ASTEROIDS_LIST[k];
+            var dist = Math.sqrt((ast.x - bullet.position[0])* (ast.x - bullet.position[0]) + (ast.y - bullet.position[1])*(ast.y - bullet.position[1])) 
+            if((dist) <= (ast.radius + bullet.radius + 1)) {
+                flag = 1;
+                ASTEROIDS_LIST.splice(k,1);
+                BULLET_LIST.splice(i,1);
+                break;
+            }
+        }
+        for(var k in PLAYER_LIST) {
+            var player = PLAYER_LIST[k];
+            if(bullet.id == player.id)
+                continue;
+            var dist = Math.sqrt((player.position[0] - bullet.position[0])* (player.position[0] - bullet.position[0])+ (player.position[1]-bullet.position[1])*(player.position[1]-bullet.position[1]));
+            if(dist <= player.radius) {
+                player.health -= 1;
+                console.log("Player got hit by bullet");
+                console.log(player.health);
+                BULLET_LIST.splice(i, 1);
+                //PLAYER_LIST.splice(k, 1);
+                // delete player object afterwards
+            }
+        }
         if(!flag) {
             bulletPack.push({
                 position:bullet.position,
@@ -304,7 +325,7 @@ setInterval(function(){
             position:player.position,
             direction:player.direction
             //number:player.number
-        });    
+        });
     }
     for(var i in ASTEROIDS_LIST) {
         var asteroid = ASTEROIDS_LIST[i];
@@ -313,6 +334,28 @@ setInterval(function(){
             position:[asteroid.x, asteroid.y],
             path:asteroid.circumference
         });
+        for(var k in PLAYER_LIST) {
+            var player = PLAYER_LIST[k];
+            var dist = Math.sqrt((player.position[0]-asteroid.x)*(player.position[0]-asteroid.x) + (player.position[1] - asteroid.y)*(player.position[1] - asteroid.y));
+            if(dist <= player.radius + asteroid.radius) {
+                player.direction = asteroid.direction;
+                player.velocity[0] = 2*asteroid.speed * Math.sin(player.direction);
+                player.velocity[1] = 2*asteroid.speed * Math.cos(player.direction);
+                player.health -= 0.35;
+                console.log("player got hit by asteroid")
+                console.log(player.health);
+            }
+        }
+        /*for(var k in ASTEROIDS_LIST) {
+            if(i == k) {
+                continue;
+            }
+            var sec_asteroid = ASTEROIDS_LIST[k];
+            var dist = Mat.sqrt((sec_asteroid.x - asteroid.x)*(sec_asteroid.x - asteroid.x) + (sec_asteroid.y - asteroid.y)*(sec_asteroid.y - asteroid.y));
+            if(dist <= asteroid.radius + sec_asteroid.radius)   {
+
+            }
+        }*/
     }
     pack.push(playerPack);
     pack.push(bulletPack);
