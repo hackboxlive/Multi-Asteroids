@@ -29,7 +29,7 @@ function Player(id, index) {
     self.DOWN = false;
     self.FIRE = false;
     self.invincible = false;
-    self.health = 100;
+    self.health = 1000;//make it 100
     self.color = PLAYERS_COLOR[index];
     self.lives = 3;
     self.score = 0;
@@ -98,25 +98,12 @@ function Player(id, index) {
         else if (self.position[1] > GAME_HEIGHT)
             self.position[1] -= GAME_HEIGHT;
     };
-
     self.die = function() {
         if (!self.dead) {
             self.dead = true;
-            self.invincible = true;
-            self.position = [100, 100];
-            self.velocity = [0, 0];
-            self.direction = -Math.PI/2;
-            if (self.lives > 0) {
-                setTimeout(function (player, _game) {
-                    return function() {
-                        player.ressurrect(_game);
-                    };
-                }(self, game), DEATH_TIMEOUT);
-            }
-            else {
-                game.gameOver();
-            }
-        }
+//            delete PLAYER_LIST[self.id];
+//            window.alert("You died. Entering spectator view!");
+		}
     };
 
     self.fire = function() {
@@ -316,6 +303,9 @@ setInterval(function(){
         }
         for(var k in PLAYER_LIST) {
             var player = PLAYER_LIST[k];
+           	if(player.dead == true)	{
+           		continue;
+           	}
             if(bullet.id == player.id)
                 continue;
             var dist = Math.sqrt((player.position[0] - bullet.position[0])* (player.position[0] - bullet.position[0])+ (player.position[1]-bullet.position[1])*(player.position[1]-bullet.position[1]));
@@ -326,6 +316,9 @@ setInterval(function(){
                     PLAYER_LIST[bullet.id].lowerScore(100);
                 }
                 player.health -= 10;
+                if(player.health <= 0)	{
+                	player.die();
+                }
                 console.log("Player got hit by bullet");
                 console.log(player.health);
                 BULLET_LIST.splice(i, 1);
@@ -343,6 +336,9 @@ setInterval(function(){
     }
     for(var i in PLAYER_LIST){
         var player = PLAYER_LIST[i];
+        if(player.dead == true)	{
+        	continue;
+        }
         player.update();
         playerPack.push({
             position:player.position,
@@ -363,12 +359,18 @@ setInterval(function(){
         });
         for(var k in PLAYER_LIST) {
             var player = PLAYER_LIST[k];
+            if(player.dead == true)	{
+            	continue;
+            }
             var dist = Math.sqrt((player.position[0]-asteroid.x)*(player.position[0]-asteroid.x) + (player.position[1] - asteroid.y)*(player.position[1] - asteroid.y));
             if(dist <= player.radius + asteroid.radius) {
                 player.direction = asteroid.direction;
                 player.velocity[0] = 2*asteroid.speed * Math.sin(player.direction);
                 player.velocity[1] = 2*asteroid.speed * Math.cos(player.direction);
                 player.health -= 3; // health change
+                if(player.health <= 0)	{
+                	player.die();
+                }
                 console.log("player got hit by asteroid")
                 console.log(player.health);
             }
