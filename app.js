@@ -5,13 +5,15 @@ var path = require('path');
 app.use(express.static(path.join(__dirname,'public')));
 const GAME_HEIGHT = 650
 const GAME_WIDTH = 1200
+const PLAYERS_COLOR = ["#FFFF00", "#00FF00", "#0000FF", "#FF0000"];
+const ASEROIDS_COLOR = ["#8B4513", "#4C0000", "#808000", "#2F4F4f"];
 
 serv.listen(8080, '0.0.0.0', function() {
     console.log("Listening on port 8080");
 });
 console.log("Server started.");
 
-function Player(id) {
+function Player(id, index) {
     console.log(id);
     console.log("Inside player function")
     var self = {};
@@ -28,6 +30,7 @@ function Player(id) {
     self.FIRE = false;
     self.invincible = false;
     self.health = 100;
+    self.color = PLAYERS_COLOR[index];
     self.lives = 3;
     self.score = 0;
     self.radius = 4; // default it was 3
@@ -118,7 +121,7 @@ function Player(id) {
 
     self.fire = function() {
         if (!self.dead) {
-            var bullet = Bullet(self.id, self.position[0], self.position[1], self.direction);
+            var bullet = Bullet(self.id, self.position[0], self.position[1], self.direction, self.color);
         }
     };
 
@@ -149,9 +152,10 @@ function Player(id) {
     return self;
 }
 
-function Bullet(id, posx, posy, dir) {
+function Bullet(id, posx, posy, dir, color) {
     var self = {};
     self.id = id;
+    self.color = color;
     self.position = [posx, posy]
     var direction = dir;
     self.direction = direction;
@@ -174,6 +178,7 @@ function Asteroid() {
     var self = {};	
     self.radius= Math.floor(Math.random()*20)+20;
     var side = Math.floor(Math.random()*4)+1;
+    self.color = ASEROIDS_COLOR[Math.floor(Math.random()*4)];
     var x,y;
     if(side == 1)	{
         x=0;
@@ -233,37 +238,43 @@ var ASTEROIDS_LIST=[];
 
 var id = 0;
 var keys = {'37': 'LEFT', '39': 'RIGHT', '38': 'UP', '40' : 'DOWN', '88': 'FIRE'};
+var playerCounter = 0;
 
 
 var io = require('socket.io')(serv,{});
 io.sockets.on('connection', function(socket){
-    socket.id = id++;
-    console.log("A client connected");
-    SOCKET_LIST[socket.id] = socket;
+    if(playerCounter <= 4) {
 
-    var player = Player(socket.id);
-    //console.log(player);
-    PLAYER_LIST[socket.id] = player;
+        socket.id = id++;
+        console.log("A client connected");
+        SOCKET_LIST[socket.id] = socket;
 
-    socket.on('disconnect',function(){
-        delete SOCKET_LIST[socket.id];
-        delete PLAYER_LIST[socket.id];
-    });
+        var player = Player(socket.id, playerCounter++);
+        //console.log(player);
+        PLAYER_LIST[socket.id] = player;
 
-    socket.on('KeyPress',function(data){
-        data.inputId = keys[data.inputId.toString()];
-        if(data.inputId === 'LEFT')
-            player.LEFT= data.state;
-        else if(data.inputId === 'RIGHT')
-            player.RIGHT= data.state;
-        else if(data.inputId === 'UP')
-            player.UP= data.state;
-        else if(data.inputId === 'DOWN')
-            player.DOWN= data.state;
-        else if(data.inputId === 'FIRE')
-            player.FIRE = data.state;
-    });
+        socket.on('disconnect',function(){
+            delete SOCKET_LIST[socket.id];
+            delete PLAYER_LIST[socket.id];
+        });
+
+        socket.on('KeyPress',function(data){
+            data.inputId = keys[data.inputId.toString()];
+            if(data.inputId === 'LEFT')
+                player.LEFT= data.state;
+            else if(data.inputId === 'RIGHT')
+                player.RIGHT= data.state;
+            else if(data.inputId === 'UP')
+                player.UP= data.state;
+            else if(data.inputId === 'DOWN')
+                player.DOWN= data.state;
+            else if(data.inputId === 'FIRE')
+                player.FIRE = data.state;
+        });
+    }
 });
+
+
 
 setInterval(function() {
     if(ASTEROIDS_LIST.length < 10)
@@ -314,7 +325,8 @@ setInterval(function(){
         if(!flag) {
             bulletPack.push({
                 position:bullet.position,
-                direction:bullet.direction
+                direction:bullet.direction,
+                color: bullet.color
             });
         }
     }
@@ -323,7 +335,8 @@ setInterval(function(){
         player.update();
         playerPack.push({
             position:player.position,
-            direction:player.direction
+            direction:player.direction,
+            color:player.color
             //number:player.number
         });
     }
@@ -332,7 +345,8 @@ setInterval(function(){
         asteroid.update();
         asteroidPack.push({
             position:[asteroid.x, asteroid.y],
-            path:asteroid.circumference
+            path:asteroid.circumference,
+            color:asteroid.color
         });
         for(var k in PLAYER_LIST) {
             var player = PLAYER_LIST[k];
@@ -346,16 +360,21 @@ setInterval(function(){
                 console.log(player.health);
             }
         }
-        /*for(var k in ASTEROIDS_LIST) {
+        for(var k in ASTEROIDS_LIST) {
             if(i == k) {
                 continue;
             }
             var sec_asteroid = ASTEROIDS_LIST[k];
-            var dist = Mat.sqrt((sec_asteroid.x - asteroid.x)*(sec_asteroid.x - asteroid.x) + (sec_asteroid.y - asteroid.y)*(sec_asteroid.y - asteroid.y));
+            var dist = Math.sqrt((sec_asteroid.x - asteroid.x)*(sec_asteroid.x - asteroid.x) + (sec_asteroid.y - asteroid.y)*(sec_asteroid.y - asteroid.y));
             if(dist <= asteroid.radius + sec_asteroid.radius)   {
-
+                var tempdir = asteroid.direction;
+                asteroid.direction = sec_asteroid.direction;
+                sec_asteroid.direction = tempdir;
+                var tempspeed = asteroid.speed;
+                asteroid.speed = sec_asteroid.speed;
+                sec_asteroid.speed = tempspeed;
             }
-        }*/
+        }
     }
     pack.push(playerPack);
     pack.push(bulletPack);
@@ -366,4 +385,4 @@ setInterval(function(){
         var socket = SOCKET_LIST[i];
         socket.emit('newPositions',pack);
     }
-},30);
+},35);

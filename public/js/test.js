@@ -64,31 +64,31 @@ window.addEventListener('load',function() {
         var asteroids = data[2];
         for(var i = 0 ; i < players.length; i++) {
             console.log(players[i].direction);
-            drawPath(ctx, players[i].position, players[i].direction, 1, path);
+            drawPath(ctx, players[i].position, players[i].direction, 1, path, players[i].color);
         }
         ctx.resetTransform();
         for(var i = 0; i < bullets.length; i++) {
             console.log(bullets[i].direction)
-            drawCircle(ctx, bullets[i].position[0], bullets[i].position[1]);
+            drawCircle(ctx, bullets[i].position[0], bullets[i].position[1], bullets[i].color);
         }
         ctx.resetTransform();
         for(var i = 0; i < asteroids.length; i++) {
-            drawAsteroid(ctx, asteroids[i].position, asteroids[i].path);
+            drawAsteroid(ctx, asteroids[i].position, asteroids[i].path, asteroids[i].color);
             ctx.resetTransform();
         }
         ctx.restore();
     });
 
-    drawCircle = function(context, x, y) {
+    drawCircle = function(context, x, y, color) {
         context.beginPath();
         var radius = 5;
         context.arc(x, y, radius, 0, 2 * Math.PI, false);
-        context.fillStyle = 'green';
+        context.fillStyle = color;
         context.fill();
         context.stroke();
     }
 
-    drawPath = function (ctx, position, direction, scale, path) {
+    drawPath = function (ctx, position, direction, scale, path, color) {
         with (Math) {
             ctx.setTransform(cos(direction) * scale, sin(direction) * scale,
                              -sin(direction) * scale, cos(direction) * scale,
@@ -101,12 +101,12 @@ window.addEventListener('load',function() {
         }
         ctx.stroke();
         ctx.closePath();
-        ctx.fillStyle="blue";
+        ctx.fillStyle= color;
         ctx.fill();
         ctx.resetTransform();
     };
 
-    drawAsteroid = function(ctx, position, paths) {
+    drawAsteroid = function(ctx, position, paths, color) {
         var scale = 1;
         ctx.translate(position[0],position[1]);
         ctx.beginPath();
@@ -117,7 +117,7 @@ window.addEventListener('load',function() {
         }
         ctx.stroke();
         ctx.closePath();
-        ctx.fillStyle="blue";
+        ctx.fillStyle= color;
         ctx.fill();
     }
 
