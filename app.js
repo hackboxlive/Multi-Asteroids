@@ -86,13 +86,13 @@ function Player(id, index) {
     };
 
     self.move = function() {
-        self.position[0] += self.velocity[0];
+        self.position[0] = Math.floor((self.position[0] + self.velocity[0]));
         if (self.position[0] < 0)
             self.position[0] = GAME_WIDTH + self.position[0];
         else if (self.position[0] > GAME_WIDTH)
             self.position[0] -= GAME_WIDTH;
 
-        self.position[1] += self.velocity[1];
+        self.position[1] = Math.floor(self.position[1] + self.velocity[1]);
         if (self.position[1] < 0)
             self.position[1] = GAME_HEIGHT + self.position[1];
         else if (self.position[1] > GAME_HEIGHT)
@@ -166,8 +166,8 @@ function Bullet(id, posx, posy, dir, color) {
     self.dead = 0;
     self.update = function() {
         if(!self.dead) {
-            self.position[0] +=  self.velocity[0];
-            self.position[1] += self.velocity[1];
+            self.position[0] =  Math.floor(self.position[0] + self.velocity[0]);
+            self.position[1] =  Math.floor(self.position[1] + self.velocity[1]);
         }
     };
     BULLET_LIST.push(self);
@@ -202,8 +202,8 @@ function Asteroid() {
     for(var i=0;i<12;i++) {
         var angle = 0.52083 * i;
         var radius = self.radius;
-        x =  (Math.random()-0.5)*radius/5 + radius*Math.sin(angle);
-        y =  (Math.random()-0.5)*radius/5 + radius*Math.cos(angle);
+        x =  Math.floor((Math.random()-0.5)*radius/10 + radius*Math.sin(angle));
+        y =  Math.floor((Math.random()-0.5)*radius/10 + radius*Math.cos(angle));
         circumference.push([x,y]);
     }
     circumference.push(circumference[0]);
@@ -211,8 +211,8 @@ function Asteroid() {
     self.speed = Math.random()*3+ 3;
     self.direction=Math.random()*6.28;
     self.update = function(){
-        self.x = self.x + self.speed * Math.sin(self.direction);
-        self.y = self.y + self.speed * Math.cos(self.direction);
+        self.x = Math.floor(self.x + self.speed * Math.sin(self.direction));
+        self.y = Math.floor(self.y + self.speed * Math.cos(self.direction));
         if(self.y >= GAME_HEIGHT) {
             self.y = 0 + self.radius + 2;
         }
@@ -256,6 +256,7 @@ io.sockets.on('connection', function(socket){
         socket.on('disconnect',function(){
             delete SOCKET_LIST[socket.id];
             delete PLAYER_LIST[socket.id];
+            playerCounter--;
         });
 
         socket.on('KeyPress',function(data){
@@ -381,8 +382,11 @@ setInterval(function(){
     pack.push(asteroidPack);
     //console.log("Length of asteroid");
     //console.log(asteroidPack.length);
+    console.log(pack[0]);
+    console.log(pack[1]);
+    console.log(pack[2]);
     for(var i in SOCKET_LIST){
         var socket = SOCKET_LIST[i];
         socket.emit('newPositions',pack);
     }
-},35);
+},3500);

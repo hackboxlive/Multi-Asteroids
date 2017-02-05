@@ -63,32 +63,31 @@ window.addEventListener('load',function() {
         var bullets = data[1];
         var asteroids = data[2];
         for(var i = 0 ; i < players.length; i++) {
-            console.log(players[i].direction);
-            drawPath(ctx, players[i].position, players[i].direction, 1, path, players[i].color);
+            drawPath(players[i].position, players[i].direction, players[i].color);
         }
         ctx.resetTransform();
         for(var i = 0; i < bullets.length; i++) {
-            console.log(bullets[i].direction)
-            drawCircle(ctx, bullets[i].position[0], bullets[i].position[1], bullets[i].color);
+            drawCircle(bullets[i].position[0], bullets[i].position[1], bullets[i].color);
         }
         ctx.resetTransform();
         for(var i = 0; i < asteroids.length; i++) {
-            drawAsteroid(ctx, asteroids[i].position, asteroids[i].path, asteroids[i].color);
+            drawAsteroid(asteroids[i].position, asteroids[i].path, asteroids[i].color);
             ctx.resetTransform();
         }
         ctx.restore();
     });
 
-    drawCircle = function(context, x, y, color) {
-        context.beginPath();
+    drawCircle = function(x, y, color) {
+        ctx.beginPath();
         var radius = 5;
-        context.arc(x, y, radius, 0, 2 * Math.PI, false);
-        context.fillStyle = color;
-        context.fill();
-        context.stroke();
+        ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.stroke();
     }
+    var scale = 1;
 
-    drawPath = function (ctx, position, direction, scale, path, color) {
+    drawPath = function (position, direction, color) {
         with (Math) {
             ctx.setTransform(cos(direction) * scale, sin(direction) * scale,
                              -sin(direction) * scale, cos(direction) * scale,
@@ -103,10 +102,10 @@ window.addEventListener('load',function() {
         ctx.closePath();
         ctx.fillStyle= color;
         ctx.fill();
-        ctx.resetTransform();
+        //ctx.resetTransform();
     };
 
-    drawAsteroid = function(ctx, position, paths, color) {
+    drawAsteroid = function(position, paths, color) {
         var scale = 1;
         ctx.translate(position[0],position[1]);
         ctx.beginPath();
