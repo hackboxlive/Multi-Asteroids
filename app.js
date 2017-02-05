@@ -4,7 +4,7 @@ var serv = require('http').Server(app);
 var path = require('path');
 app.use(express.static(path.join(__dirname,'public')));
 const GAME_HEIGHT = 650
-const GAME_WIDTH = 1200
+const GAME_WIDTH = 1100
 const PLAYERS_COLOR = ["#FFFF00", "#00FF00", "#0000FF", "#FF0000"];
 const ASEROIDS_COLOR = ["#8B4513", "#4C0000", "#808000", "#2F4F4f"];
 
@@ -306,6 +306,11 @@ setInterval(function(){
                 flag = 1;
                 ASTEROIDS_LIST.splice(k,1);
                 BULLET_LIST.splice(i,1);
+                PLAYER_LIST[bullet.id].addScore(20);
+                if(PLAYER_LIST[bullet.id].score >=100) {
+                    PLAYER_LIST[bullet.id].health += 5;
+                    PLAYER_LIST[bullet.id].lowerScore(100);
+                }
                 break;
             }
         }
@@ -314,8 +319,13 @@ setInterval(function(){
             if(bullet.id == player.id)
                 continue;
             var dist = Math.sqrt((player.position[0] - bullet.position[0])* (player.position[0] - bullet.position[0])+ (player.position[1]-bullet.position[1])*(player.position[1]-bullet.position[1]));
-            if(dist <= player.radius) {
-                player.health -= 1;
+            if(dist <= player.radius + bullet.radius) {
+                PLAYER_LIST[bullet.id].addScore(100);
+                if(PLAYER_LIST[bullet.id].score >=100) {
+                    PLAYER_LIST[bullet.id].health += 5;
+                    PLAYER_LIST[bullet.id].lowerScore(100);
+                }
+                player.health -= 10;
                 console.log("Player got hit by bullet");
                 console.log(player.health);
                 BULLET_LIST.splice(i, 1);
@@ -337,7 +347,9 @@ setInterval(function(){
         playerPack.push({
             position:player.position,
             direction:player.direction,
-            color:player.color
+            color:player.color,
+            health:player.health,
+            point:player.score
             //number:player.number
         });
     }
@@ -356,7 +368,7 @@ setInterval(function(){
                 player.direction = asteroid.direction;
                 player.velocity[0] = 2*asteroid.speed * Math.sin(player.direction);
                 player.velocity[1] = 2*asteroid.speed * Math.cos(player.direction);
-                player.health -= 0.35;
+                player.health -= 3; // health change
                 console.log("player got hit by asteroid")
                 console.log(player.health);
             }
@@ -380,13 +392,8 @@ setInterval(function(){
     pack.push(playerPack);
     pack.push(bulletPack);
     pack.push(asteroidPack);
-    //console.log("Length of asteroid");
-    //console.log(asteroidPack.length);
-    console.log(pack[0]);
-    console.log(pack[1]);
-    console.log(pack[2]);
     for(var i in SOCKET_LIST){
         var socket = SOCKET_LIST[i];
         socket.emit('newPositions',pack);
     }
-},3500);
+},35);
